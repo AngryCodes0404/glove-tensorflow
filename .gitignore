@@ -1,0 +1,17 @@
+# python
+__pycache__/
+*.py[cod]
+
+# ide
+.idea/
+
+# os
+.DS_Store
+
+# project
+data/
+checkpoints/
+export/
+.ipynb_checkpoints/
+*.ipynb
+main.log*
