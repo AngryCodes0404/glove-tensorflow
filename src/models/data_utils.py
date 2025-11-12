@@ -1,8 +1,14 @@
 import tensorflow as tf
 
 
-def get_csv_input_fn(file_pattern, select_columns=None, target_names=[],
-                     batch_size=32, num_epochs=1, **kwargs):
+def get_csv_input_fn(
+    file_pattern,
+    select_columns=None,
+    target_names=[],
+    batch_size=32,
+    num_epochs=1,
+    **kwargs
+):
     def arrange_columns(features):
         targets = {col: features.pop(col) for col in target_names}
         return features, targets
@@ -26,18 +32,29 @@ def get_csv_input_fn(file_pattern, select_columns=None, target_names=[],
     return input_fn
 
 
-def get_csv_dataset(file_pattern, select_columns=None, target_names=[], weight_names=[],
-                    batch_size=32, num_epochs=1, **kwargs):
+def get_csv_dataset(
+    file_pattern,
+    select_columns=None,
+    target_names=[],
+    weight_names=[],
+    batch_size=32,
+    num_epochs=1,
+    **kwargs
+):
     def arrange_columns(features, targets):
         targets = {col: tf.expand_dims(targets[col], -1) for col in target_names}
-        weights = {target_col: features.pop(weight_col) for target_col, weight_col in
-                   zip(target_names, weight_names)}
+        weights = {
+            target_col: features.pop(weight_col)
+            for target_col, weight_col in zip(target_names, weight_names)
+        }
         output = features, targets, weights
 
         return output
 
     with tf.name_scope("dataset"):
-        input_fn = get_csv_input_fn(file_pattern, select_columns, target_names, batch_size, num_epochs, **kwargs)
+        input_fn = get_csv_input_fn(
+            file_pattern, select_columns, target_names, batch_size, num_epochs, **kwargs
+        )
         dataset = input_fn()
         if len(weight_names) > 0:
             dataset = dataset.map(arrange_columns, num_parallel_calls=-1)
@@ -63,35 +80,25 @@ def get_keras_estimator_input_fn(dataset_fn=get_csv_dataset, **kwargs):
 
 def get_serving_input_fn(int_features=(), float_features=(), string_features=()):
     features = {}
-    features.update({
-        key: tf.constant(0, name=key)
-        for key in int_features
-    })
-    features.update({
-        key: tf.constant(0., name=key)
-        for key in float_features
-    })
-    features.update({
-        key: tf.constant("", name=key)
-        for key in string_features
-    })
+    features.update({key: tf.constant(0, name=key) for key in int_features})
+    features.update({key: tf.constant(0.0, name=key) for key in float_features})
+    features.update({key: tf.constant("", name=key) for key in string_features})
 
     return tf.estimator.export.build_raw_serving_input_receiver_fn(features)
 
 
-def get_parsing_serving_input_fn(int_features=(), float_features=(), string_features=()):
+def get_parsing_serving_input_fn(
+    int_features=(), float_features=(), string_features=()
+):
     features = {}
-    features.update({
-        key: tf.FixedLenFeature((), tf.int32, name=key)
-        for key in int_features
-    })
-    features.update({
-        key: tf.FixedLenFeature((), tf.float32, name=key)
-        for key in float_features
-    })
-    features.update({
-        key: tf.FixedLenFeature((), tf.string, name=key)
-        for key in string_features
-    })
+    features.update(
+        {key: tf.FixedLenFeature((), tf.int32, name=key) for key in int_features}
+    )
+    features.update(
+        {key: tf.FixedLenFeature((), tf.float32, name=key) for key in float_features}
+    )
+    features.update(
+        {key: tf.FixedLenFeature((), tf.string, name=key) for key in string_features}
+    )
 
     return tf.estimator.export.build_parsing_serving_input_receiver_fn(features)

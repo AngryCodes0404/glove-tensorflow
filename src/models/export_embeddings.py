@@ -42,14 +42,12 @@ def main(job_dir=JOB_DIR, embeddings_json=EMBEDDINGS_JSON, **kwargs):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
-        "--job-dir",
-        default=JOB_DIR,
-        help="job directory (default: %(default)s)"
+        "--job-dir", default=JOB_DIR, help="job directory (default: %(default)s)"
     )
     parser.add_argument(
         "--embeddings-json",
         default=EMBEDDINGS_JSON,
-        help="path to the embeddings json (default: %(default)s)"
+        help="path to the embeddings json (default: %(default)s)",
     )
     args = parser.parse_args()
     logger.info("call: %s.", " ".join(sys.argv))

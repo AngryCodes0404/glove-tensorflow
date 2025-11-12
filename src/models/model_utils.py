@@ -4,36 +4,53 @@ from src.config import EMBEDDING_SIZE, L2_REG, TOP_K, VOCAB_TXT
 from src.models.utils import cosine_similarity
 
 
-def get_embedding_layer(vocab_size, embedding_size=EMBEDDING_SIZE, l2_reg=L2_REG, name="embedding"):
+def get_embedding_layer(
+    vocab_size, embedding_size=EMBEDDING_SIZE, l2_reg=L2_REG, name="embedding"
+):
     scaled_l2_reg = l2_reg / embedding_size
     regularizer = tf.keras.regularizers.l1_l2(l1=0, l2=scaled_l2_reg)
     embedding_layer = tf.keras.layers.Embedding(
-        vocab_size, embedding_size,
-        activity_regularizer=regularizer,
-        name=name
+        vocab_size, embedding_size, activity_regularizer=regularizer, name=name
     )
     return embedding_layer
 
 
 def compute_activity_loss(tensor, regularizer):
     batch_activty_loss = regularizer(tensor)
-    mean_activity_loss = batch_activty_loss / tf.cast(tf.shape(tensor)[0], batch_activty_loss.dtype)
+    mean_activity_loss = batch_activty_loss / tf.cast(
+        tf.shape(tensor)[0], batch_activty_loss.dtype
+    )
     return mean_activity_loss
 
 
 class MatrixFactorisation(tf.keras.layers.Layer):
-    def __init__(self, vocab_size, embedding_size=EMBEDDING_SIZE, l2_reg=L2_REG, name="matrix_factorisation", **kwargs):
+    def __init__(
+        self,
+        vocab_size,
+        embedding_size=EMBEDDING_SIZE,
+        l2_reg=L2_REG,
+        name="matrix_factorisation",
+        **kwargs
+    ):
         super(MatrixFactorisation, self).__init__(name=name, **kwargs)
         self.vocab_size = vocab_size
         self.embedding_size = embedding_size
         self.l2_reg = l2_reg
 
     def build(self, input_shapes):
-        self.row_embeddings = get_embedding_layer(self.vocab_size, self.embedding_size, self.l2_reg, "row_embedding")
-        self.row_biases = get_embedding_layer(self.vocab_size, 1, self.l2_reg, "row_bias")
+        self.row_embeddings = get_embedding_layer(
+            self.vocab_size, self.embedding_size, self.l2_reg, "row_embedding"
+        )
+        self.row_biases = get_embedding_layer(
+            self.vocab_size, 1, self.l2_reg, "row_bias"
+        )
 
-        self.col_embeddings = get_embedding_layer(self.vocab_size, self.embedding_size, self.l2_reg, "col_embedding")
-        self.col_biases = get_embedding_layer(self.vocab_size, 1, self.l2_reg, "col_bias")
+        self.col_embeddings = get_embedding_layer(
+            self.vocab_size, self.embedding_size, self.l2_reg, "col_embedding"
+        )
+        self.col_biases = get_embedding_layer(
+            self.vocab_size, 1, self.l2_reg, "col_bias"
+        )
 
         self.regularizer = tf.keras.regularizers.l1_l2(l1=0, l2=self.l2_reg)
         self.global_bias = self.add_weight(name="global_bias", initializer="zeros")
@@ -47,10 +64,14 @@ class MatrixFactorisation(tf.keras.layers.Layer):
         col_embed = self.col_embeddings(col_id)
         col_bias = self.col_biases(col_id)
 
-        embed_product = tf.keras.layers.dot([row_embed, col_embed], axes=-1, name="embed_product")
+        embed_product = tf.keras.layers.dot(
+            [row_embed, col_embed], axes=-1, name="embed_product"
+        )
         global_bias = tf.ones_like(embed_product) * self.global_bias
         self.add_loss(compute_activity_loss(global_bias, self.regularizer))
-        logits = tf.keras.layers.Add(name="logits")([embed_product, row_bias, col_bias, global_bias])
+        logits = tf.keras.layers.Add(name="logits")(
+            [embed_product, row_bias, col_bias, global_bias]
+        )
         return logits
 
     def get_config(self):
@@ -99,7 +120,9 @@ def get_predictions(inputs, model, vocab_txt=VOCAB_TXT, top_k=TOP_K):
         top_k_sim, top_k_idx = tf.math.top_k(cosine_sim, k=top_k, name="top_k_sim")
         # [None, top_k], [None, top_k]
         id_string_table = get_id_string_table(vocab_txt)
-        top_k_string = id_string_table.lookup(tf.cast(top_k_idx, tf.int64), name="top_k_string_lookup")
+        top_k_string = id_string_table.lookup(
+            tf.cast(top_k_idx, tf.int64), name="top_k_string_lookup"
+        )
         # [None, top_k]
     values = {
         "input_string": input_string,
@@ -119,18 +142,30 @@ def add_summary(model):
 
 
 def get_string_id_table(vocab_txt=VOCAB_TXT):
-    lookup_table = tf.lookup.StaticHashTable(tf.lookup.TextFileInitializer(
-        vocab_txt,
-        tf.string, tf.lookup.TextFileIndex.WHOLE_LINE,
-        tf.int64, tf.lookup.TextFileIndex.LINE_NUMBER,
-    ), 0, name="string_id_table")
+    lookup_table = tf.lookup.StaticHashTable(
+        tf.lookup.TextFileInitializer(
+            vocab_txt,
+            tf.string,
+            tf.lookup.TextFileIndex.WHOLE_LINE,
+            tf.int64,
+            tf.lookup.TextFileIndex.LINE_NUMBER,
+        ),
+        0,
+        name="string_id_table",
+    )
     return lookup_table
 
 
 def get_id_string_table(vocab_txt=VOCAB_TXT):
-    lookup_table = tf.lookup.StaticHashTable(tf.lookup.TextFileInitializer(
-        vocab_txt,
-        tf.int64, tf.lookup.TextFileIndex.LINE_NUMBER,
-        tf.string, tf.lookup.TextFileIndex.WHOLE_LINE,
-    ), "<UNK>", name="id_string_table")
+    lookup_table = tf.lookup.StaticHashTable(
+        tf.lookup.TextFileInitializer(
+            vocab_txt,
+            tf.int64,
+            tf.lookup.TextFileIndex.LINE_NUMBER,
+            tf.string,
+            tf.lookup.TextFileIndex.WHOLE_LINE,
+        ),
+        "<UNK>",
+        name="id_string_table",
+    )
     return lookup_table
