@@ -1,12 +1,32 @@
 import tensorflow as tf
 
 from src.config import (
-    COL_NAME, EMBEDDING_SIZE, L2_REG, LEARNING_RATE, OPTIMIZER, ROW_NAME, TARGET_NAME, TOP_K, VOCAB_TXT, WEIGHT_NAME,
+    COL_NAME,
+    EMBEDDING_SIZE,
+    L2_REG,
+    LEARNING_RATE,
+    OPTIMIZER,
+    ROW_NAME,
+    TARGET_NAME,
+    TOP_K,
+    VOCAB_TXT,
+    WEIGHT_NAME,
 )
 from src.models.config_utils import parse_args
 from src.models.data_utils import get_csv_input_fn, get_serving_input_fn
-from src.models.model_utils import MatrixFactorisation, add_summary, get_predictions, get_string_id_table
-from src.models.train_utils import get_estimator, get_eval_spec, get_exporter, get_optimizer, get_train_spec
+from src.models.model_utils import (
+    MatrixFactorisation,
+    add_summary,
+    get_predictions,
+    get_string_id_table,
+)
+from src.models.train_utils import (
+    get_estimator,
+    get_eval_spec,
+    get_exporter,
+    get_optimizer,
+    get_train_spec,
+)
 from src.models.utils import file_lines
 
 
@@ -25,11 +45,14 @@ def model_fn(features, labels, mode, params):
     # features transform
     with tf.name_scope("features"):
         string_id_table = get_string_id_table(vocab_txt)
-        inputs = [string_id_table.lookup(features[name], name=name + "_lookup") for name in [row_name, col_name]]
+        inputs = [
+            string_id_table.lookup(features[name], name=name + "_lookup")
+            for name in [row_name, col_name]
+        ]
 
     # model
     model = MatrixFactorisation(file_lines(vocab_txt), embedding_size, l2_reg)
-    training = (mode == tf.estimator.ModeKeys.TRAIN)
+    training = mode == tf.estimator.ModeKeys.TRAIN
     logits = model(inputs, training=training)
     add_summary(model)
 
@@ -47,12 +70,15 @@ def model_fn(features, labels, mode, params):
     # head
     head = tf.estimator.RegressionHead(weight_column=weight_name)
     return head.create_estimator_spec(
-        features, mode, logits,
+        features,
+        mode,
+        logits,
         labels=labels[target_name],
         optimizer=optimizer,
         trainable_variables=model.trainable_variables,
         update_ops=model.get_updates_for(None) + model.get_updates_for(features),
-        regularization_losses=model.get_losses_for(None) + model.get_losses_for(features),
+        regularization_losses=model.get_losses_for(None)
+        + model.get_losses_for(features),
     )
 
 

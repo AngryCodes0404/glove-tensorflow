@@ -41,7 +41,9 @@ def get_train_spec(input_fn, train_steps):
 
 
 def get_exporter(serving_input_fn):
-    return tf.estimator.LatestExporter(name="exporter", serving_input_receiver_fn=serving_input_fn)
+    return tf.estimator.LatestExporter(
+        name="exporter", serving_input_receiver_fn=serving_input_fn
+    )
 
 
 def get_eval_spec(input_fn, exporter, throttle_secs=EVAL_INTERVAL):
