@@ -13,12 +13,9 @@ logger = get_logger(__name__)
 def format_predictions(predictions):
     embeddings = {}
     for instance in predictions:
-        # need to convert byte to string
-        # and remove numpy types
         item_id = instance["input_string"].decode()
         item_embedding = instance["input_embedding"].tolist()
 
-        # add entry only if valid predictions
         if item_id != "<UNK>":
             instance_embedding = {"item_id": item_id, "item_embedding": item_embedding}
             embeddings[item_id] = instance_embedding
