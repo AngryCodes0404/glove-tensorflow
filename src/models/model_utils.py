@@ -4,6 +4,7 @@ from src.config import EMBEDDING_SIZE, L2_REG, TOP_K, VOCAB_TXT
 from src.models.utils import cosine_similarity
 
 
+
 def get_embedding_layer(
     vocab_size, embedding_size=EMBEDDING_SIZE, l2_reg=L2_REG, name="embedding"
 ):
