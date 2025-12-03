@@ -12,6 +12,7 @@ from src.config import (
     VOCAB_TXT,
     WEIGHT_NAME,
 )
+
 from src.models.config_utils import parse_args
 from src.models.data_utils import get_csv_input_fn, get_serving_input_fn
 from src.models.model_utils import (

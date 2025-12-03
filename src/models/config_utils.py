@@ -93,7 +93,6 @@ def init_params(params):
     return params
 
 
-
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
